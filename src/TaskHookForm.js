@@ -1,20 +1,31 @@
 import React from "react";
 import { useForm, Controller } from "react-hook-form";
+import { ToastContainer, toast } from "react-toastify";
+import { nanoid } from "nanoid";
+import "react-toastify/dist/ReactToastify.css";
 
 let renderCount = 0;
 
 function TaskHookForm(props) {
-  const { kisiler, submitFn, tasks } = props;
+  const notify = () => toast("Kayıt işlemi tamamlandı!");
+  const { kisiler, submitFn } = props;
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
+    reset,
   } = useForm({ mode: "onChange" });
 
   renderCount++;
 
   const onSubmit = (formData) => {
     console.log(formData);
+    submitFn({
+      ...formData,
+      id: nanoid(5),
+      status: "yapılacak",
+    });
+    reset();
   };
 
   return (
@@ -36,7 +47,9 @@ function TaskHookForm(props) {
             },
           })}
         />
-        {errors.title && <p>{errors.title.message}</p>}
+        {errors.title && (
+          <p className="input-error">{errors?.title?.message}</p>
+        )}
       </div>
 
       <div className="form-line">
@@ -56,7 +69,9 @@ function TaskHookForm(props) {
             },
           })}></textarea>
       </div>
-      {errors.description && <p>{errors.description.message}</p>}
+      {errors.description && (
+        <p className="input-error"> {errors?.description?.message}</p>
+      )}
 
       <div className="form-line">
         <label className="input-label">İnsanlar</label>
@@ -64,24 +79,39 @@ function TaskHookForm(props) {
         <div>
           {kisiler.map((p) => (
             <label className="input-checkbox" key={p}>
-              {p}
               <input
                 type="checkbox"
                 name="people"
-                {...register("isim", {
-                  value: true,
-                  message: "En fazla 3 kişi seçebilirsiniz",
+                value={p}
+                {...register("people", {
+                  required: {
+                    value: true,
+                    message: "En az 1 kişi seçin",
+                  },
+
+                  validate: {
+                    maxKisi: (kisiler) =>
+                      kisiler.length <= 3 || "en fazla 3 kişi seçin",
+                  },
                 })}
               />
+              {p}
             </label>
           ))}
         </div>
+        <p className="input-error">{errors?.people?.message}</p>
       </div>
 
       <div className="form-line">
-        <button type="submit" disabled={!isValid}>
-          Gönder
+        <button
+          className="submit-button"
+          onClick={notify}
+          type="submit"
+          disabled={!isValid}>
+          {" "}
+          Gönder{" "}
         </button>
+        <ToastContainer />
       </div>
     </form>
   );
